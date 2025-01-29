@@ -1,0 +1,11 @@
+using my manager, setup html site.
+
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull deepseek
+
+
+
+ollama run deepseek-r1:1.5b
+
+
+working api for server and config

@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DeepSeek Raw</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        #response { white-space: pre-wrap; background: #f0f0f0; padding: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>DeepSeek Chat</h1>
+    <input type="text" id="input" placeholder="Ask something..." style="width: 70%">
+    <button onclick="sendPrompt()">Send</button>
+    <div id="response"></div>
+
+    <script>
+    async function sendPrompt() {
+        const prompt = document.getElementById('input').value;
+        const responseDiv = document.getElementById('response');
+        responseDiv.innerHTML = 'Thinking...';
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: "deepseek-r1:1.5b",
+                    prompt: prompt,
+                    stream: false
+                })
+            });
+
+            const data = await response.json();
+            responseDiv.innerHTML = data.response;
+        } catch (error) {
+            responseDiv.innerHTML = `Error: ${error.message}`;
+        }
+    }
+    </script>
+</body>
+</html>
+
+
+
+
