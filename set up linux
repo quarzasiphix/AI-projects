@@ -6,6 +6,7 @@ ollama pull deepseek
 
 
 ollama run deepseek-r1:1.5b
+uvicorn proxy:app --host 127.0.0.1 --port 8000 --workers 2
 
 
 working api for server and config
