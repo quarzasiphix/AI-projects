@@ -1,48 +1,191 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DeepSeek Raw</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quarza Chat</title>
     <style>
-        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
-        #response { white-space: pre-wrap; background: #f0f0f0; padding: 10px; margin-top: 10px; }
+        /* General Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        /* Message Bubbles */
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 16px;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: #ff4500;
+            color: white;
+            border-top-right-radius: 0;
+        }
+
+        .bot-message {
+            align-self: flex-start;
+            background: #333;
+            color: white;
+            border-top-left-radius: 0;
+        }
+
+        /* Input Area */
+        .input-area {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            gap: 10px;
+            background: #333;
+            padding: 10px;
+            border-radius: 50px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            outline: none;
+            background: #444;
+            color: #fff;
+        }
+
+        button {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            background: #ff4500;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #ff5a26;
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            input {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>DeepSeek Chat</h1>
-    <input type="text" id="input" placeholder="Ask something..." style="width: 70%">
-    <button onclick="sendPrompt()">Send</button>
-    <div id="response"></div>
+    <h1>Quarza Chat</h1>
+
+    <div class="chat-container" id="chat-container"></div>
+
+    <div class="input-area">
+        <input type="text" id="input" placeholder="Type a message..." onkeypress="handleKeyPress(event)">
+        <button onclick="sendPrompt()">➤</button>
+    </div>
 
     <script>
-    async function sendPrompt() {
-        const prompt = document.getElementById('input').value;
-        const responseDiv = document.getElementById('response');
-        responseDiv.innerHTML = 'Thinking...';
-
-        try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    model: "deepseek-r1:1.5b",
-                    prompt: prompt,
-                    stream: false
-                })
-            });
-
-            const data = await response.json();
-            responseDiv.innerHTML = data.response;
-        } catch (error) {
-            responseDiv.innerHTML = `Error: ${error.message}`;
+        async function sendPrompt() {
+            const inputField = document.getElementById('input');
+            const chatContainer = document.getElementById('chat-container');
+            const prompt = inputField.value.trim();
+        
+            if (!prompt) return;
+        
+            // Display user message
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('message', 'user-message');
+            userMessage.textContent = prompt;
+            chatContainer.appendChild(userMessage);
+        
+            inputField.value = ""; // Clear input
+        
+            // Auto scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+            // Show bot response placeholder
+            const botMessage = document.createElement('div');
+            botMessage.classList.add('message', 'bot-message');
+            chatContainer.appendChild(botMessage);
+        
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: "deepseek-r1:1.5b", prompt: prompt, stream: true })
+                });
+        
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let result = "";
+                
+                // Stream data chunk by chunk
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    result += decoder.decode(value, { stream: true });
+                    botMessage.textContent = result;  // Update message in real-time
+                }
+            } catch (error) {
+                botMessage.textContent = `Error: ${error.message}`;
+            }
+        
+            // Auto scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
-    }
+        
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendPrompt();
+            }
+        }
     </script>
 </body>
 </html>
-
-
-
-
