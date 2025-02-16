@@ -1,0 +1,7 @@
+sudo apt install npm
+sudo apt install node
+
+npm install n8n -g
+
+source ~/.n8n/.env
+n8n start --tunnel
